@@ -63,10 +63,51 @@ contract CrowdFunding {
         return numberOfCampaigns-1;
     }
 
-    function donateToCampaign(){}
+    // payable is used whenever there is transaction involved(cypto would be exchanged)
+    function donateToCampaign(uint256 _id) public payable {
+        // this would be taken from the front-end
+        uint256 amount = msg.value;
 
-    function getDonators(){}
+        // getting hold of the campaign for which donation has come
+        Campaign storage campaign = campaigns[_id];
 
-    function getCampaigns(){}
+        //adding the donator id in the donators list
+        campaign.donators.push(msg.sender);
 
+        //adding amount of separate donations into the donations array
+        campaign.donations.push(amount);
+
+        // payable returns 2 values hence we have added , after sent
+        // sent variable tells wheather the transaction has been sent or not
+        (bool sent,) = payable(campaign.owner).call{value: amount}("");
+
+        // if transaction succesfull add the amount to the total amount collected of the campaign
+        if(sent) {
+            campaign.amountCollected = campaign.amountCollected + amount;
+        }
+    }
+
+    // view function is a function that only return data
+    // it will return an array of addresses of donators and array of integers donations
+    function getDonators(uint256 _id) view public 
+    returns (address[] memory, uint256[] memory) {
+
+        return (campaigns[_id].donators, campaigns[_id].donations);
+    }
+
+    //whenever we get something from memory we add memory keyword
+    function getCampaigns() public view returns (Campaign[] memory) {
+
+        //creatomg a variable allCampagains which is an array of struct Campaigns
+        Campaign[] memory allCampaigns = new Campaign[](numberOfCampaigns);
+
+        for(uint i = 0; i < numberOfCampaigns; i++) {
+            //fetching indivisual campaign from the storage
+            Campaign storage item = campaigns[i];
+
+            allCampaigns[i] = item;
+        }
+
+        return allCampaigns;
+    }
 }
